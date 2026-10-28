@@ -1,0 +1,1137 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2e; --panel2:#0e1626; --line:#1e2b45;
+    --txt:#e8eefc; --muted:#93a3c4; --accent:#22c55e;
+    --green:#22c55e; --blue:#3b82f6; --yellow:#eab308;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#13203a 0%,var(--bg) 55%);
+    color:var(--txt); line-height:1.4; padding:24px; min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{margin-bottom:22px}
+  .title{font-size:26px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+  .title .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+  .subtitle{color:var(--muted);margin-top:6px;font-size:14px;max-width:760px}
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;font-weight:700}
+  .caption{font-size:12px;color:var(--muted);margin:-8px 0 12px}
+
+  /* Setup controls */
+  .setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px}
+  .field input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:9px 10px;font-size:15px;font-weight:600}
+  .field input:focus{outline:none;border-color:var(--accent)}
+  .field input.locked{background:#0a1120;color:var(--muted);cursor:default;opacity:.75}
+  .field input.locked:focus{border-color:var(--line)}
+  .field label .lock{font-size:10px;opacity:.7}
+  .field .suffix{font-size:11px;color:var(--muted);margin-top:3px}
+
+  /* Holdings table */
+  .cat{margin-bottom:16px}
+  .cat-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .cat-name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+  .swatch{width:11px;height:11px;border-radius:3px}
+  .cat-total{font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--panel2);border:1px solid var(--line)}
+  .cat-total.ok{color:var(--green);border-color:rgba(34,197,94,.4)}
+  .cat-total.bad{color:#f87171;border-color:rgba(248,113,113,.4)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:4px 6px;font-weight:600}
+  td{padding:3px 6px}
+  .hrow td:first-child{width:16px}
+  .cswatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .cell{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 8px;font-size:13px;width:100%}
+  .cell:focus{outline:none;border-color:var(--accent)}
+  .cell::placeholder{color:#546085}
+  .cell:disabled{opacity:.85;cursor:default}
+  .field input:disabled{opacity:.7;cursor:default}
+  .cell.tick{font-weight:700;text-transform:uppercase}
+  .cell.tick.unknown{border-color:#fbbf24;background:rgba(251,191,36,.10)}
+  .cell.num{text-align:right;font-variant-numeric:tabular-nums}
+  .col-alloc,.col-ret{width:78px}
+  .col-tick{width:84px}
+  /* Return cell (hidden until lock-in) */
+  .retcell{display:flex;align-items:center;justify-content:flex-end;min-height:32px;font-weight:700}
+  .retcell.retmask{justify-content:center;color:#4b587a;background:#0a1120;font-size:14px}
+  .retcell.revealed{color:var(--txt);background:#0a1120}
+  .grand{display:flex;justify-content:space-between;align-items:center;padding:10px 4px 0;border-top:1px solid var(--line);margin-top:6px;font-size:13px}
+  .grand b{font-size:15px}
+
+  /* Pie */
+  .pie-wrap{display:flex;flex-direction:column;align-items:center}
+  .pie-legend{width:100%;margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
+  .leg{display:flex;align-items:center;gap:8px;font-size:12px}
+  .leg .cswatch{flex:none}
+  .leg .lt{font-weight:600}
+  .leg .lp{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+  .center-r{font-size:11px;fill:var(--muted)}
+  .center-v{font-size:24px;font-weight:800;fill:var(--txt)}
+  .center-lock{font-size:30px}
+  .pie-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;max-width:230px}
+
+  /* Diversification coach */
+  .coach h2{margin-top:20px}
+  .tips{display:flex;flex-direction:column;gap:8px}
+  .tip{font-size:12.5px;line-height:1.45;padding:9px 11px;border-radius:9px;border-left:3px solid var(--line);background:var(--panel2);color:#cdd7ee}
+  .tip .tb{font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:9.5px;color:var(--muted);display:block;margin-bottom:2px}
+  .tip.warn{border-left-color:#fbbf24}
+  .tip.info{border-left-color:#60a5fa}
+  .tip.good{border-left-color:#22c55e}
+
+  /* Scenario cards */
+  .scenarios{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+  @media(max-width:560px){.scenarios{grid-template-columns:1fr}}
+  .scard{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel2);position:relative;overflow:hidden}
+  .scard.a{border-color:rgba(59,130,246,.35)}
+  .scard.b{border-color:rgba(34,197,94,.45)}
+  .scard .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:12px}
+  .scard.a .tag{background:rgba(59,130,246,.15);color:#93c5fd}
+  .scard.b .tag{background:rgba(34,197,94,.15);color:#86efac}
+  .metric{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .metric:last-child{border-bottom:none}
+  .metric .ml{font-size:12px;color:var(--muted)}
+  .metric .mv{font-weight:700;font-variant-numeric:tabular-nums}
+  .metric.final .mv{font-size:22px;color:var(--txt)}
+  .metric.final .ml{font-size:13px;color:var(--txt);font-weight:600}
+  .mv.hid{color:#4b587a;font-weight:700}
+  .grow-pos{color:var(--green)}
+  .delta{margin-top:14px;font-size:12px;color:var(--muted);text-align:center}
+  .delta b{color:var(--green)}
+  .locked-panel{position:relative}
+  .lockveil{text-align:center;color:var(--muted);font-size:13px;padding:6px 0 2px}
+
+  /* Line chart */
+  .chart-panel{margin-top:18px}
+  .chartbox{width:100%;overflow-x:auto}
+  .chart-holdmsg{display:flex;align-items:center;justify-content:center;height:200px;color:#4b587a;font-size:14px;gap:10px}
+  .legend-line{display:flex;gap:18px;justify-content:center;margin-top:10px;font-size:12px}
+  .legend-line span{display:flex;align-items:center;gap:6px}
+  .ll{width:16px;height:3px;border-radius:2px}
+
+  .btns{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);color:#04220f;border-color:var(--accent)}
+  .btn:disabled{cursor:default;opacity:.85;border-color:var(--line)}
+  .btn.done{background:rgba(34,197,94,.15);color:#86efac;border-color:rgba(34,197,94,.4)}
+  .lockmsg{margin-top:10px;font-size:12.5px;min-height:16px}
+  .lockmsg.warn{color:#fbbf24}
+  .lockmsg.ok{color:var(--green)}
+  .lockmsg.sending{color:#93c5fd}
+  .submit-row{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .submit-row label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .submit-row input{max-width:340px}
+  footer{margin-top:24px;color:var(--muted);font-size:11px;text-align:center;line-height:1.6}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="title"><span class="dot"></span>FlowState Student Portfolio Builder</div>
+    <div class="subtitle">Pick your own 4 ETFs · 3 blue chips · 3 moonshots, enter deposit amounts that fit <b>your</b> budget, and watch your expected return and 30-year growth update live. When you're happy with it, submit it to FlowState Alpha.</div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: setup + holdings -->
+    <div class="panel">
+      <h2>Portfolio Setup</h2>
+      <div class="setup">
+        <div class="field"><label>Starting Age</label><input id="startAge" type="number" value="16"><div class="suffix">years old</div></div>
+        <div class="field"><label>Retirement Age</label><input id="retireAge" type="number" min="1" value="45"><div class="suffix"><span id="horizon">29</span>-yr horizon</div></div>
+        <div class="field"><label>Starting Deposit</label><input id="startDeposit" type="number" min="0" placeholder="e.g. 5000"><div class="suffix">one-time, to start</div></div>
+        <div class="field"><label>Deposit — Plan A</label><input id="depA" type="number" min="0" placeholder="e.g. 2000"><div class="suffix">per year — realistic</div></div>
+        <div class="field"><label>Deposit — Plan B</label><input id="depB" type="number" min="0" placeholder="e.g. 4000"><div class="suffix">per year — stretch goal</div></div>
+      </div>
+
+      <h2 style="margin-top:4px">Your Holdings — pick a ticker for each row</h2>
+      <div class="caption">Weights are pre-set to the 55 / 25 / 20 plan (all editable). Each holding's <b>expected return fills in automatically</b> from the ticker you pick — start typing a ticker to see suggestions.</div>
+      <div id="cats"></div>
+      <div id="datalists"></div>
+
+      <div class="grand">
+        <span>Total allocation</span>
+        <span id="grandAlloc"><b>100%</b></span>
+      </div>
+      <div class="grand" style="border-top:none;padding-top:2px">
+        <span>Blended expected annual return</span>
+        <span id="blendRet"><b>—</b></span>
+      </div>
+
+      <div class="submit-row">
+        <label for="studentEmail">Your email <span style="color:#f87171">*</span> — so FlowState Alpha knows it's yours</label>
+        <input id="studentEmail" class="cell" type="email" placeholder="you@school.edu" autocomplete="email">
+      </div>
+
+      <div class="btns" id="btnRow">
+        <button class="btn" id="resetBtn" onclick="resetAll()">↺ Start over</button>
+        <button class="btn" onclick="window.print()">🖨 Print / Save PDF</button>
+        <button class="btn primary" id="submitBtn" onclick="submitPortfolio()">📤 Submit to FlowState Alpha</button>
+      </div>
+      <div class="lockmsg" id="lockMsg"></div>
+    </div>
+
+    <!-- RIGHT: pie -->
+    <div class="panel">
+      <h2>Allocation Breakdown</h2>
+      <div class="pie-wrap">
+        <svg id="pie" viewBox="0 0 260 260" width="260" height="260"></svg>
+        <div class="pie-legend" id="legend"></div>
+        <div class="pie-hint" id="pieHint">ETFs shade green · blue chips blue · moonshots yellow. Pick tickers to name your slices.</div>
+      </div>
+      <div class="coach">
+        <h2>💡 Diversification Coach</h2>
+        <div class="tips" id="tips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario results -->
+  <div class="panel locked-panel" style="margin-top:18px">
+    <h2>Projection at Retirement <span id="retLabel" style="color:var(--muted);text-transform:none;letter-spacing:0"></span></h2>
+    <div class="scenarios">
+      <div class="scard a">
+        <span class="tag">Plan A · $<span id="tagA">5,000</span>/yr</span>
+        <div class="metric"><span class="ml">Total deposited</span><span class="mv" id="depTotA">—</span></div>
+        <div class="metric"><span class="ml">Total growth</span><span class="mv grow-pos" id="growA">—</span></div>
+        <div class="metric final"><span class="ml">Final value</span><span class="mv" id="finA">—</span></div>
+      </div>
+      <div class="scard b">
+        <span class="tag">Plan B · $<span id="tagB">10,000</span>/yr</span>
+        <div class="metric"><span class="ml">Total deposited</span><span class="mv" id="depTotB">—</span></div>
+        <div class="metric"><span class="ml">Total growth</span><span class="mv grow-pos" id="growB">—</span></div>
+        <div class="metric final"><span class="ml">Final value</span><span class="mv" id="finB">—</span></div>
+      </div>
+    </div>
+    <div class="delta" id="deltaMsg"></div>
+  </div>
+
+  <!-- Growth chart -->
+  <div class="panel chart-panel">
+    <h2>Growth Over Time</h2>
+    <div class="chartbox"><svg id="chart" viewBox="0 0 900 340" width="100%" height="340" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="legend-line" id="chartLegend">
+      <span><span class="ll" style="background:var(--blue)"></span>Plan A ($<span id="llA">5,000</span>/yr)</span>
+      <span><span class="ll" style="background:var(--green)"></span>Plan B ($<span id="llB">10,000</span>/yr)</span>
+    </div>
+  </div>
+
+  <footer>
+    Educational projection only — not financial advice. Return figures are long-run estimates assigned to each ticker, not guarantees; real markets vary year to year. Each holding compounds at its expected return with deposits added at each year-end.<br>
+    FlowState Student Portfolio Builder
+  </footer>
+</div>
+
+<script>
+// ---------- Category shells ----------
+const GREENS  = ['#14532d','#166534','#16a34a','#4ade80'];        // 4 ETFs
+const BLUES   = ['#1e3a8a','#2563eb','#60a5fa'];                  // 3 blue chips
+const YELLOWS = ['#a16207','#eab308','#fde047'];                  // 3 moonshots
+
+// Pre-set allocations (55/25/20) + baseline return used until a specific ticker is picked
+const DEFAULTS = [
+  {cat:'ETFs (55%)',      key:'etf', color:'var(--green)', pal:GREENS,  base:10, rows:[
+    {tick:'',name:'',alloc:15,ret:10},{tick:'',name:'',alloc:15,ret:10},
+    {tick:'',name:'',alloc:15,ret:10},{tick:'',name:'',alloc:10,ret:10}]},
+  {cat:'Blue Chips (25%)',key:'blue',color:'var(--blue)',  pal:BLUES,   base:10, rows:[
+    {tick:'',name:'',alloc:9,ret:10},{tick:'',name:'',alloc:8,ret:10},{tick:'',name:'',alloc:8,ret:10}]},
+  {cat:'Moonshots (20%)', key:'moon',color:'var(--yellow)',pal:YELLOWS, base:18, rows:[
+    {tick:'',name:'',alloc:7,ret:18},{tick:'',name:'',alloc:7,ret:18},{tick:'',name:'',alloc:6,ret:18}]},
+];
+
+// ---------- Ticker → {name, expected annual return %, bucket} ----------
+const RETURNS = {
+  VOO:{n:'S&P 500 ETF',r:10,b:'etf'}, VTI:{n:'Total Market ETF',r:10,b:'etf'}, SPY:{n:'S&P 500 ETF',r:10,b:'etf'},
+  IVV:{n:'S&P 500 ETF',r:10,b:'etf'}, QQQ:{n:'Nasdaq-100 ETF',r:12,b:'etf'}, QQQM:{n:'Nasdaq-100 ETF',r:12,b:'etf'},
+  VGT:{n:'Info Tech ETF',r:12,b:'etf'}, VUG:{n:'Growth ETF',r:12,b:'etf'}, SCHG:{n:'Large-Cap Growth ETF',r:12,b:'etf'},
+  SCHD:{n:'Dividend ETF',r:9,b:'etf'}, VYM:{n:'High Dividend ETF',r:9,b:'etf'}, DGRO:{n:'Dividend Growth ETF',r:9,b:'etf'},
+  VIG:{n:'Dividend Appreciation ETF',r:9,b:'etf'}, DIA:{n:'Dow 30 ETF',r:9,b:'etf'}, IWM:{n:'Russell 2000 ETF',r:9,b:'etf'},
+  VXUS:{n:'International ETF',r:8,b:'etf'}, VEA:{n:'Developed Mkts ETF',r:8,b:'etf'}, VWO:{n:'Emerging Mkts ETF',r:8,b:'etf'},
+  SOXX:{n:'Semiconductor ETF',r:14,b:'etf'}, SMH:{n:'Semiconductor ETF',r:14,b:'etf'}, ARKK:{n:'Innovation ETF',r:13,b:'etf'},
+  BND:{n:'Total Bond ETF',r:4,b:'etf'}, AGG:{n:'Total Bond ETF',r:4,b:'etf'},
+  AAPL:{n:'Apple',r:11,b:'blue'}, MSFT:{n:'Microsoft',r:12,b:'blue'}, GOOGL:{n:'Alphabet',r:11,b:'blue'},
+  GOOG:{n:'Alphabet',r:11,b:'blue'}, AMZN:{n:'Amazon',r:12,b:'blue'}, META:{n:'Meta Platforms',r:12,b:'blue'},
+  JNJ:{n:'Johnson & Johnson',r:8,b:'blue'}, PG:{n:'Procter & Gamble',r:8,b:'blue'}, KO:{n:'Coca-Cola',r:7,b:'blue'},
+  PEP:{n:'PepsiCo',r:8,b:'blue'}, WMT:{n:'Walmart',r:9,b:'blue'}, HD:{n:'Home Depot',r:9,b:'blue'},
+  V:{n:'Visa',r:11,b:'blue'}, MA:{n:'Mastercard',r:11,b:'blue'}, JPM:{n:'JPMorgan Chase',r:9,b:'blue'},
+  'BRK.B':{n:'Berkshire Hathaway',r:10,b:'blue'}, UNH:{n:'UnitedHealth',r:10,b:'blue'}, XOM:{n:'Exxon Mobil',r:8,b:'blue'},
+  CVX:{n:'Chevron',r:8,b:'blue'}, DIS:{n:'Disney',r:8,b:'blue'}, MCD:{n:"McDonald's",r:9,b:'blue'},
+  COST:{n:'Costco',r:11,b:'blue'}, NKE:{n:'Nike',r:9,b:'blue'}, CAT:{n:'Caterpillar',r:9,b:'blue'},
+  HON:{n:'Honeywell',r:9,b:'blue'}, LLY:{n:'Eli Lilly',r:12,b:'blue'}, AVGO:{n:'Broadcom',r:13,b:'blue'},
+  TSLA:{n:'Tesla',r:18,b:'moon'}, NVDA:{n:'Nvidia',r:20,b:'moon'}, PLTR:{n:'Palantir',r:22,b:'moon'},
+  AMD:{n:'AMD',r:17,b:'moon'}, COIN:{n:'Coinbase',r:22,b:'moon'}, MSTR:{n:'MicroStrategy',r:25,b:'moon'},
+  RIVN:{n:'Rivian',r:20,b:'moon'}, LCID:{n:'Lucid',r:20,b:'moon'}, SOFI:{n:'SoFi',r:18,b:'moon'},
+  HOOD:{n:'Robinhood',r:20,b:'moon'}, RBLX:{n:'Roblox',r:18,b:'moon'}, NET:{n:'Cloudflare',r:18,b:'moon'},
+  SNOW:{n:'Snowflake',r:17,b:'moon'}, CRWD:{n:'CrowdStrike',r:18,b:'moon'}, MARA:{n:'Marathon Digital',r:24,b:'moon'},
+  RIOT:{n:'Riot Platforms',r:24,b:'moon'}, SMCI:{n:'Super Micro',r:22,b:'moon'}, ARM:{n:'Arm Holdings',r:18,b:'moon'},
+  DKNG:{n:'DraftKings',r:18,b:'moon'}, UPST:{n:'Upstart',r:20,b:'moon'}, IONQ:{n:'IonQ',r:24,b:'moon'},
+  ASTS:{n:'AST SpaceMobile',r:25,b:'moon'}, AI:{n:'C3.ai',r:20,b:'moon'},
+  // --- more ETFs (small-cap / value / mid / REIT / international / sector / income / commodity / bond) ---
+  AVUV:{n:'US Small-Cap Value ETF',r:10,b:'etf'}, VBR:{n:'Small-Cap Value ETF',r:10,b:'etf'}, VB:{n:'Small-Cap ETF',r:9,b:'etf'},
+  IJR:{n:'S&P SmallCap 600 ETF',r:9,b:'etf'}, VO:{n:'Mid-Cap ETF',r:9,b:'etf'}, VTV:{n:'Value ETF',r:9,b:'etf'},
+  IWF:{n:'Russell 1000 Growth ETF',r:11,b:'etf'}, IWD:{n:'Russell 1000 Value ETF',r:9,b:'etf'}, MGK:{n:'Mega-Cap Growth ETF',r:12,b:'etf'},
+  VNQ:{n:'Real Estate ETF',r:9,b:'etf'}, SCHH:{n:'REIT ETF',r:9,b:'etf'},
+  VGK:{n:'Europe ETF',r:8,b:'etf'}, EFA:{n:'Developed Markets ETF',r:8,b:'etf'}, IEFA:{n:'Core Intl ETF',r:8,b:'etf'},
+  EEM:{n:'Emerging Markets ETF',r:8,b:'etf'}, SCHF:{n:'Intl Equity ETF',r:8,b:'etf'}, INDA:{n:'India ETF',r:10,b:'etf'}, EWJ:{n:'Japan ETF',r:7,b:'etf'},
+  XLK:{n:'Technology Sector ETF',r:12,b:'etf'}, XLF:{n:'Financials Sector ETF',r:9,b:'etf'}, XLE:{n:'Energy Sector ETF',r:8,b:'etf'},
+  XLV:{n:'Healthcare Sector ETF',r:9,b:'etf'}, XLY:{n:'Consumer Disc. ETF',r:10,b:'etf'}, XLP:{n:'Consumer Staples ETF',r:8,b:'etf'},
+  XLI:{n:'Industrials Sector ETF',r:9,b:'etf'}, XLU:{n:'Utilities Sector ETF',r:7,b:'etf'},
+  JEPI:{n:'Equity Income ETF',r:8,b:'etf'}, JEPQ:{n:'Nasdaq Income ETF',r:9,b:'etf'},
+  GLD:{n:'Gold ETF',r:6,b:'etf'}, SLV:{n:'Silver ETF',r:6,b:'etf'}, TLT:{n:'Long-Term Treasury ETF',r:4,b:'etf'},
+  // --- more blue chips (US large caps + international ADRs & friendly aliases) ---
+  ORCL:{n:'Oracle',r:11,b:'blue'}, CRM:{n:'Salesforce',r:11,b:'blue'}, ADBE:{n:'Adobe',r:11,b:'blue'},
+  CSCO:{n:'Cisco',r:8,b:'blue'}, INTC:{n:'Intel',r:7,b:'blue'}, IBM:{n:'IBM',r:7,b:'blue'},
+  QCOM:{n:'Qualcomm',r:10,b:'blue'}, TXN:{n:'Texas Instruments',r:9,b:'blue'}, ORLY:{n:"O'Reilly Automotive",r:10,b:'blue'},
+  NFLX:{n:'Netflix',r:11,b:'blue'}, ABNB:{n:'Airbnb',r:11,b:'blue'},
+  BAC:{n:'Bank of America',r:9,b:'blue'}, WFC:{n:'Wells Fargo',r:8,b:'blue'}, GS:{n:'Goldman Sachs',r:9,b:'blue'},
+  MS:{n:'Morgan Stanley',r:9,b:'blue'}, AXP:{n:'American Express',r:10,b:'blue'},
+  ABBV:{n:'AbbVie',r:9,b:'blue'}, MRK:{n:'Merck',r:8,b:'blue'}, PFE:{n:'Pfizer',r:6,b:'blue'},
+  TMO:{n:'Thermo Fisher',r:10,b:'blue'}, ABT:{n:'Abbott',r:9,b:'blue'}, DHR:{n:'Danaher',r:9,b:'blue'}, AMGN:{n:'Amgen',r:8,b:'blue'},
+  SBUX:{n:'Starbucks',r:8,b:'blue'}, TGT:{n:'Target',r:8,b:'blue'}, LOW:{n:"Lowe's",r:9,b:'blue'},
+  BA:{n:'Boeing',r:8,b:'blue'}, GE:{n:'GE Aerospace',r:9,b:'blue'}, RTX:{n:'RTX',r:8,b:'blue'}, LMT:{n:'Lockheed Martin',r:8,b:'blue'},
+  DE:{n:'Deere',r:9,b:'blue'}, UNP:{n:'Union Pacific',r:8,b:'blue'}, UPS:{n:'UPS',r:7,b:'blue'},
+  T:{n:'AT&T',r:6,b:'blue'}, VZ:{n:'Verizon',r:6,b:'blue'}, CMCSA:{n:'Comcast',r:7,b:'blue'}, NEE:{n:'NextEra Energy',r:8,b:'blue'},
+  TSM:{n:'Taiwan Semiconductor',r:12,b:'blue'}, ASML:{n:'ASML',r:12,b:'blue'}, NVO:{n:'Novo Nordisk',r:12,b:'blue'},
+  SAP:{n:'SAP',r:9,b:'blue'}, SONY:{n:'Sony',r:9,b:'blue'}, TM:{n:'Toyota',r:7,b:'blue'}, NSRGY:{n:'Nestlé',r:7,b:'blue'},
+  UL:{n:'Unilever',r:7,b:'blue'}, DEO:{n:'Diageo',r:7,b:'blue'}, SHEL:{n:'Shell',r:7,b:'blue'}, BABA:{n:'Alibaba',r:8,b:'blue'},
+  ADDYY:{n:'Adidas',r:8,b:'blue'}, LVMUY:{n:'LVMH',r:9,b:'blue'}, EADSY:{n:'Airbus',r:9,b:'blue'},
+  LVMH:{n:'LVMH',r:9,b:'blue'}, AIR:{n:'Airbus',r:9,b:'blue'}, ADIDAS:{n:'Adidas',r:8,b:'blue'}, NESTLE:{n:'Nestlé',r:7,b:'blue'},
+  // --- more moonshots (space / EV / quantum / nuclear / clean energy / fintech / social / biotech) ---
+  RKLB:{n:'Rocket Lab',r:20,b:'moon'}, SHOP:{n:'Shopify',r:15,b:'moon'}, DDOG:{n:'Datadog',r:16,b:'moon'},
+  U:{n:'Unity',r:16,b:'moon'}, ROKU:{n:'Roku',r:16,b:'moon'}, XYZ:{n:'Block',r:16,b:'moon'}, SQ:{n:'Block',r:16,b:'moon'},
+  AFRM:{n:'Affirm',r:18,b:'moon'}, CVNA:{n:'Carvana',r:18,b:'moon'}, RDDT:{n:'Reddit',r:18,b:'moon'},
+  SNAP:{n:'Snap',r:16,b:'moon'}, PINS:{n:'Pinterest',r:14,b:'moon'}, DASH:{n:'DoorDash',r:14,b:'moon'},
+  ENPH:{n:'Enphase',r:16,b:'moon'}, FSLR:{n:'First Solar',r:14,b:'moon'}, PLUG:{n:'Plug Power',r:22,b:'moon'},
+  NIO:{n:'Nio',r:20,b:'moon'}, LI:{n:'Li Auto',r:18,b:'moon'}, XPEV:{n:'XPeng',r:20,b:'moon'},
+  LUNR:{n:'Intuitive Machines',r:24,b:'moon'}, SPCE:{n:'Virgin Galactic',r:22,b:'moon'}, JOBY:{n:'Joby Aviation',r:22,b:'moon'},
+  ACHR:{n:'Archer Aviation',r:22,b:'moon'}, OKLO:{n:'Oklo',r:22,b:'moon'}, SMR:{n:'NuScale Power',r:22,b:'moon'},
+  SOUN:{n:'SoundHound AI',r:24,b:'moon'}, BBAI:{n:'BigBear.ai',r:24,b:'moon'}, RGTI:{n:'Rigetti',r:24,b:'moon'},
+  QBTS:{n:'D-Wave Quantum',r:24,b:'moon'}, RXRX:{n:'Recursion',r:22,b:'moon'}, TEM:{n:'Tempus AI',r:22,b:'moon'},
+  HIMS:{n:'Hims & Hers',r:18,b:'moon'}, CELH:{n:'Celsius',r:15,b:'moon'}, CRSP:{n:'CRISPR Therapeutics',r:18,b:'moon'},
+  GME:{n:'GameStop',r:12,b:'moon'},
+};
+
+// ---------- Sector / theme tags for the Diversification Coach ----------
+const ETF_BROAD_US = new Set(['VOO','VTI','SPY','IVV','DIA']);
+const ETF_TECH     = new Set(['QQQ','QQQM','VGT','VUG','SCHG','SOXX','SMH','ARKK','XLK','MGK','IWF']);
+const ETF_INTL     = new Set(['VXUS','VEA','VWO','VGK','EFA','IEFA','EEM','SCHF','INDA','EWJ']);
+const ETF_DIV      = new Set(['SCHD','VYM','DGRO','VIG','JEPI','JEPQ']);
+const MEGA         = new Set(['AAPL','MSFT','NVDA','AMZN','GOOGL','GOOG','META','AVGO','NFLX']);
+const SECTOR = {AAPL:'Tech',MSFT:'Tech',GOOGL:'Tech',GOOG:'Tech',AMZN:'Tech',META:'Tech',AVGO:'Tech',
+  ORCL:'Tech',CRM:'Tech',ADBE:'Tech',CSCO:'Tech',INTC:'Tech',IBM:'Tech',QCOM:'Tech',TXN:'Tech',NFLX:'Tech',TSM:'Tech',ASML:'Tech',SAP:'Tech',SONY:'Tech',
+  V:'Financials',MA:'Financials',JPM:'Financials',BAC:'Financials',WFC:'Financials',GS:'Financials',MS:'Financials',AXP:'Financials',
+  JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',ABBV:'Healthcare',MRK:'Healthcare',PFE:'Healthcare',TMO:'Healthcare',ABT:'Healthcare',DHR:'Healthcare',AMGN:'Healthcare',NVO:'Healthcare',
+  KO:'Consumer',PEP:'Consumer',PG:'Consumer',WMT:'Consumer',HD:'Consumer',MCD:'Consumer',COST:'Consumer',NKE:'Consumer',DIS:'Consumer',SBUX:'Consumer',TGT:'Consumer',LOW:'Consumer',ORLY:'Consumer',ABNB:'Consumer',NSRGY:'Consumer',UL:'Consumer',DEO:'Consumer',BABA:'Consumer',TM:'Consumer',ADDYY:'Consumer',LVMUY:'Consumer',LVMH:'Consumer',ADIDAS:'Consumer',NESTLE:'Consumer',
+  XOM:'Energy',CVX:'Energy',SHEL:'Energy',
+  CAT:'Industrials',HON:'Industrials',BA:'Industrials',GE:'Industrials',RTX:'Industrials',LMT:'Industrials',DE:'Industrials',UNP:'Industrials',UPS:'Industrials',EADSY:'Industrials',AIR:'Industrials',
+  T:'Telecom',VZ:'Telecom',CMCSA:'Media',NEE:'Utilities'};
+const THEME = {NVDA:'AI/Chips',AMD:'AI/Chips',SMCI:'AI/Chips',ARM:'AI/Chips',
+  PLTR:'AI/Data',AI:'AI/Data',SNOW:'AI/Data',CRWD:'AI/Data',NET:'AI/Data',DDOG:'AI/Data',SOUN:'AI/Data',BBAI:'AI/Data',TEM:'AI/Data',
+  COIN:'Crypto',MSTR:'Crypto',MARA:'Crypto',RIOT:'Crypto',
+  TSLA:'EV',RIVN:'EV',LCID:'EV',NIO:'EV',LI:'EV',XPEV:'EV',
+  SOFI:'Fintech',HOOD:'Fintech',UPST:'Fintech',DKNG:'Fintech',AFRM:'Fintech',SQ:'Fintech',XYZ:'Fintech',
+  IONQ:'Quantum',RGTI:'Quantum',QBTS:'Quantum',
+  ASTS:'Space',RKLB:'Space',LUNR:'Space',SPCE:'Space',
+  JOBY:'Air Mobility',ACHR:'Air Mobility',
+  OKLO:'Nuclear',SMR:'Nuclear',
+  ENPH:'Clean Energy',FSLR:'Clean Energy',PLUG:'Clean Energy',
+  SNAP:'Social',PINS:'Social',RDDT:'Social',
+  SHOP:'E-commerce',CVNA:'E-commerce',
+  CRSP:'Biotech',RXRX:'Biotech',
+  RBLX:'Gaming',U:'Gaming',ROKU:'Streaming',DASH:'Delivery',HIMS:'Health',CELH:'Consumer',GME:'Meme'};
+
+// ============================================================
+//  EXPANDED TICKER LIBRARY (2026) — recent IPOs, AI infra, crypto, nuclear,
+//  defense, robotics, Canadian stocks & ETFs. Add more here anytime: TICKER:{n:'Name',r:return%,b:'etf'|'blue'|'moon'}
+// ============================================================
+Object.assign(RETURNS,{
+  // ---- US ETFs ----
+  SCHB:{n:'US Broad Market ETF',r:10,b:'etf'}, ITOT:{n:'Total US Market ETF',r:10,b:'etf'}, SPLG:{n:'S&P 500 ETF',r:10,b:'etf'},
+  SCHX:{n:'US Large-Cap ETF',r:10,b:'etf'}, IWB:{n:'Russell 1000 ETF',r:10,b:'etf'}, RSP:{n:'Equal-Weight S&P 500 ETF',r:9,b:'etf'},
+  VT:{n:'Total World ETF',r:9,b:'etf'}, ACWI:{n:'All-World ETF',r:9,b:'etf'}, IXUS:{n:'Total Intl ETF',r:8,b:'etf'},
+  VEU:{n:'All-World ex-US ETF',r:8,b:'etf'}, SCHE:{n:'Emerging Mkts ETF',r:8,b:'etf'}, KWEB:{n:'China Internet ETF',r:9,b:'etf'},
+  FXI:{n:'China Large-Cap ETF',r:7,b:'etf'}, MCHI:{n:'China ETF',r:7,b:'etf'}, EWZ:{n:'Brazil ETF',r:8,b:'etf'},
+  EWY:{n:'South Korea ETF',r:8,b:'etf'}, EWT:{n:'Taiwan ETF',r:9,b:'etf'}, EWC:{n:'Canada ETF',r:8,b:'etf'},
+  SPYG:{n:'S&P 500 Growth ETF',r:11,b:'etf'}, VONG:{n:'Russell 1000 Growth ETF',r:11,b:'etf'}, IGV:{n:'Software ETF',r:12,b:'etf'},
+  CIBR:{n:'Cybersecurity ETF',r:12,b:'etf'}, HACK:{n:'Cybersecurity ETF',r:12,b:'etf'}, AIQ:{n:'AI & Tech ETF',r:12,b:'etf'},
+  BOTZ:{n:'Robotics & AI ETF',r:11,b:'etf'}, ROBO:{n:'Robotics ETF',r:10,b:'etf'}, ARKW:{n:'Next-Gen Internet ETF',r:13,b:'etf'},
+  ARKG:{n:'Genomics ETF',r:12,b:'etf'}, SPYV:{n:'S&P 500 Value ETF',r:9,b:'etf'}, SCHA:{n:'US Small-Cap ETF',r:9,b:'etf'},
+  VXF:{n:'Extended Market ETF',r:9,b:'etf'}, IJH:{n:'S&P MidCap 400 ETF',r:9,b:'etf'}, MDY:{n:'MidCap 400 ETF',r:9,b:'etf'},
+  COWZ:{n:'Cash Cows ETF',r:9,b:'etf'}, MOAT:{n:'Wide Moat ETF',r:10,b:'etf'}, QUAL:{n:'Quality Factor ETF',r:10,b:'etf'},
+  MTUM:{n:'Momentum Factor ETF',r:10,b:'etf'}, USMV:{n:'Min Volatility ETF',r:8,b:'etf'}, DIVO:{n:'Dividend & Income ETF',r:8,b:'etf'},
+  XLC:{n:'Communication Svcs ETF',r:10,b:'etf'}, ITA:{n:'Aerospace & Defense ETF',r:9,b:'etf'}, URA:{n:'Uranium ETF',r:11,b:'etf'},
+  URNM:{n:'Uranium Miners ETF',r:11,b:'etf'}, NLR:{n:'Nuclear Energy ETF',r:10,b:'etf'}, TAN:{n:'Solar ETF',r:10,b:'etf'},
+  ICLN:{n:'Clean Energy ETF',r:9,b:'etf'}, LIT:{n:'Lithium & Battery ETF',r:10,b:'etf'}, UFO:{n:'Space ETF',r:11,b:'etf'},
+  VHT:{n:'Healthcare ETF',r:9,b:'etf'}, VFH:{n:'Financials ETF',r:9,b:'etf'}, VDE:{n:'Energy ETF',r:8,b:'etf'},
+  VIS:{n:'Industrials ETF',r:9,b:'etf'}, VCR:{n:'Consumer Disc. ETF',r:10,b:'etf'}, VDC:{n:'Consumer Staples ETF',r:8,b:'etf'},
+  VPU:{n:'Utilities ETF',r:7,b:'etf'}, VOX:{n:'Communication ETF',r:9,b:'etf'},
+  IBIT:{n:'iShares Bitcoin ETF',r:15,b:'etf'}, FBTC:{n:'Fidelity Bitcoin ETF',r:15,b:'etf'}, ETHA:{n:'iShares Ethereum ETF',r:15,b:'etf'}, BITO:{n:'Bitcoin Strategy ETF',r:14,b:'etf'},
+  // ---- Canadian ETFs ----
+  XEQT:{n:'iShares All-Equity ETF',r:9,b:'etf'}, VEQT:{n:'Vanguard All-Equity ETF',r:9,b:'etf'}, XGRO:{n:'iShares Growth ETF',r:8,b:'etf'},
+  VGRO:{n:'Vanguard Growth ETF',r:8,b:'etf'}, ZEQT:{n:'BMO All-Equity ETF',r:9,b:'etf'},
+  VFV:{n:'S&P 500 ETF (CAD)',r:10,b:'etf'}, XUS:{n:'S&P 500 ETF (CAD)',r:10,b:'etf'}, ZSP:{n:'S&P 500 ETF (CAD)',r:10,b:'etf'},
+  XSP:{n:'S&P 500 ETF (CAD-hedged)',r:10,b:'etf'}, XUU:{n:'US Total Market ETF (CAD)',r:10,b:'etf'},
+  XIU:{n:'S&P/TSX 60 ETF',r:8,b:'etf'}, XIC:{n:'TSX Composite ETF',r:8,b:'etf'}, VCN:{n:'FTSE Canada All Cap ETF',r:8,b:'etf'}, ZCN:{n:'Canada Equity ETF',r:8,b:'etf'},
+  XAW:{n:'All-World ex-Canada ETF',r:9,b:'etf'}, VXC:{n:'All-World ex-Canada ETF',r:9,b:'etf'}, XEF:{n:'Intl Developed ETF (CAD)',r:8,b:'etf'},
+  VIU:{n:'Developed ex-NA ETF',r:8,b:'etf'}, XEC:{n:'Emerging Mkts ETF (CAD)',r:8,b:'etf'}, VEE:{n:'Emerging Mkts ETF (CAD)',r:8,b:'etf'},
+  ZQQ:{n:'Nasdaq-100 ETF (CAD)',r:12,b:'etf'}, XQQ:{n:'Nasdaq-100 ETF (CAD)',r:12,b:'etf'}, HXQ:{n:'Nasdaq-100 ETF (CAD)',r:12,b:'etf'},
+  ZEB:{n:'Canadian Banks ETF',r:9,b:'etf'}, VDY:{n:'Canadian High Dividend ETF',r:8,b:'etf'}, XEI:{n:'Canadian Dividend ETF',r:8,b:'etf'},
+  ZDV:{n:'Canadian Dividend ETF',r:8,b:'etf'}, ZAG:{n:'Canadian Bond ETF',r:4,b:'etf'}, XBB:{n:'Canadian Bond ETF',r:4,b:'etf'},
+  // ---- Blue chips: US ----
+  SKHY:{n:'SK Hynix',r:13,b:'blue'}, MU:{n:'Micron',r:12,b:'blue'}, AMAT:{n:'Applied Materials',r:11,b:'blue'}, LRCX:{n:'Lam Research',r:11,b:'blue'},
+  KLAC:{n:'KLA Corp',r:11,b:'blue'}, ADI:{n:'Analog Devices',r:10,b:'blue'}, NXPI:{n:'NXP Semiconductors',r:9,b:'blue'}, ON:{n:'ON Semiconductor',r:10,b:'blue'},
+  MCHP:{n:'Microchip',r:9,b:'blue'}, ANET:{n:'Arista Networks',r:13,b:'blue'}, DELL:{n:'Dell',r:10,b:'blue'}, HPE:{n:'HPE',r:8,b:'blue'},
+  NOW:{n:'ServiceNow',r:12,b:'blue'}, INTU:{n:'Intuit',r:11,b:'blue'}, WDAY:{n:'Workday',r:10,b:'blue'}, PANW:{n:'Palo Alto Networks',r:12,b:'blue'},
+  FTNT:{n:'Fortinet',r:11,b:'blue'}, UBER:{n:'Uber',r:12,b:'blue'}, SPOT:{n:'Spotify',r:12,b:'blue'}, BKNG:{n:'Booking Holdings',r:11,b:'blue'},
+  PYPL:{n:'PayPal',r:9,b:'blue'}, TJX:{n:'TJX',r:9,b:'blue'}, CMG:{n:'Chipotle',r:10,b:'blue'}, LULU:{n:'Lululemon',r:9,b:'blue'},
+  RACE:{n:'Ferrari',r:11,b:'blue'}, GM:{n:'General Motors',r:7,b:'blue'}, F:{n:'Ford',r:6,b:'blue'}, TTWO:{n:'Take-Two Interactive',r:10,b:'blue'},
+  EA:{n:'Electronic Arts',r:9,b:'blue'}, MELI:{n:'MercadoLibre',r:13,b:'blue'}, TCEHY:{n:'Tencent',r:10,b:'blue'}, PDD:{n:'PDD Holdings',r:10,b:'blue'},
+  JD:{n:'JD.com',r:8,b:'blue'}, BIDU:{n:'Baidu',r:8,b:'blue'}, BYDDY:{n:'BYD',r:11,b:'blue'}, NTDOY:{n:'Nintendo',r:9,b:'blue'},
+  VST:{n:'Vistra',r:12,b:'blue'}, CEG:{n:'Constellation Energy',r:12,b:'blue'}, BWXT:{n:'BWX Technologies',r:10,b:'blue'}, CCJ:{n:'Cameco',r:12,b:'blue'},
+  ISRG:{n:'Intuitive Surgical',r:11,b:'blue'}, VRTX:{n:'Vertex Pharma',r:10,b:'blue'}, REGN:{n:'Regeneron',r:9,b:'blue'}, BSX:{n:'Boston Scientific',r:10,b:'blue'},
+  SPGI:{n:'S&P Global',r:10,b:'blue'}, BLK:{n:'BlackRock',r:10,b:'blue'}, SCHW:{n:'Charles Schwab',r:9,b:'blue'}, PGR:{n:'Progressive',r:10,b:'blue'},
+  ETN:{n:'Eaton',r:11,b:'blue'}, GEV:{n:'GE Vernova',r:12,b:'blue'}, WM:{n:'Waste Management',r:9,b:'blue'}, MMM:{n:'3M',r:7,b:'blue'},
+  // ---- Blue chips: Canada ----
+  RY:{n:'Royal Bank of Canada',r:9,b:'blue'}, TD:{n:'TD Bank',r:8,b:'blue'}, BNS:{n:'Scotiabank',r:7,b:'blue'}, BMO:{n:'Bank of Montreal',r:8,b:'blue'},
+  CM:{n:'CIBC',r:8,b:'blue'}, ENB:{n:'Enbridge',r:8,b:'blue'}, CNQ:{n:'Canadian Natural Resources',r:9,b:'blue'}, SU:{n:'Suncor',r:8,b:'blue'},
+  CNR:{n:'CN Rail',r:9,b:'blue'}, CNI:{n:'CN Rail',r:9,b:'blue'}, CP:{n:'CPKC Rail',r:9,b:'blue'}, BCE:{n:'BCE',r:6,b:'blue'},
+  ATD:{n:'Couche-Tard',r:10,b:'blue'}, CSU:{n:'Constellation Software',r:13,b:'blue'}, BN:{n:'Brookfield Corp',r:11,b:'blue'}, BAM:{n:'Brookfield Asset Mgmt',r:10,b:'blue'},
+  MFC:{n:'Manulife',r:8,b:'blue'}, DOL:{n:'Dollarama',r:11,b:'blue'}, TRI:{n:'Thomson Reuters',r:10,b:'blue'}, WCN:{n:'Waste Connections',r:9,b:'blue'},
+  // ---- Moonshots ----
+  IREN:{n:'IREN',r:24,b:'moon'}, CRWV:{n:'CoreWeave',r:22,b:'moon'}, NBIS:{n:'Nebius',r:22,b:'moon'}, CORZ:{n:'Core Scientific',r:22,b:'moon'},
+  CIFR:{n:'Cipher Mining',r:24,b:'moon'}, WULF:{n:'TeraWulf',r:24,b:'moon'}, APLD:{n:'Applied Digital',r:24,b:'moon'},
+  HUT:{n:'Hut 8',r:22,b:'moon'}, CLSK:{n:'CleanSpark',r:24,b:'moon'}, BTDR:{n:'Bitdeer',r:24,b:'moon'}, GLXY:{n:'Galaxy Digital',r:20,b:'moon'},
+  BMNR:{n:'BitMine Immersion',r:25,b:'moon'}, SBET:{n:'SharpLink Gaming',r:25,b:'moon'}, CRCL:{n:'Circle',r:20,b:'moon'},
+  ALAB:{n:'Astera Labs',r:20,b:'moon'}, CRDO:{n:'Credo Technology',r:20,b:'moon'}, COHR:{n:'Coherent',r:16,b:'moon'}, LITE:{n:'Lumentum',r:18,b:'moon'},
+  VRT:{n:'Vertiv',r:16,b:'moon'}, MRVL:{n:'Marvell',r:16,b:'moon'}, SNDK:{n:'SanDisk',r:18,b:'moon'}, NVTS:{n:'Navitas Semiconductor',r:22,b:'moon'},
+  POET:{n:'POET Technologies',r:24,b:'moon'}, APP:{n:'AppLovin',r:18,b:'moon'}, TTD:{n:'The Trade Desk',r:15,b:'moon'}, PATH:{n:'UiPath',r:16,b:'moon'},
+  S:{n:'SentinelOne',r:16,b:'moon'}, ZS:{n:'Zscaler',r:15,b:'moon'}, MDB:{n:'MongoDB',r:15,b:'moon'}, OKTA:{n:'Okta',r:14,b:'moon'}, FIG:{n:'Figma',r:18,b:'moon'},
+  RDW:{n:'Redwire',r:22,b:'moon'}, PL:{n:'Planet Labs',r:22,b:'moon'}, BKSY:{n:'BlackSky',r:22,b:'moon'}, FLY:{n:'Firefly Aerospace',r:22,b:'moon'},
+  LEU:{n:'Centrus Energy',r:20,b:'moon'}, NNE:{n:'Nano Nuclear',r:24,b:'moon'}, TLN:{n:'Talen Energy',r:16,b:'moon'},
+  QUBT:{n:'Quantum Computing Inc',r:24,b:'moon'}, KTOS:{n:'Kratos Defense',r:18,b:'moon'}, AVAV:{n:'AeroVironment',r:16,b:'moon'},
+  ONDS:{n:'Ondas Holdings',r:24,b:'moon'}, RCAT:{n:'Red Cat',r:24,b:'moon'}, SYM:{n:'Symbotic',r:20,b:'moon'}, SERV:{n:'Serve Robotics',r:24,b:'moon'},
+  RR:{n:'Richtech Robotics',r:24,b:'moon'}, MP:{n:'MP Materials',r:20,b:'moon'}, USAR:{n:'USA Rare Earth',r:24,b:'moon'}, UUUU:{n:'Energy Fuels',r:20,b:'moon'},
+  VKTX:{n:'Viking Therapeutics',r:22,b:'moon'}, BEAM:{n:'Beam Therapeutics',r:22,b:'moon'}, NTLA:{n:'Intellia',r:22,b:'moon'},
+  NU:{n:'Nu Holdings',r:18,b:'moon'}, CHYM:{n:'Chime',r:18,b:'moon'}, KLAR:{n:'Klarna',r:18,b:'moon'}, TOST:{n:'Toast',r:15,b:'moon'},
+  DUOL:{n:'Duolingo',r:16,b:'moon'}, ELF:{n:'e.l.f. Beauty',r:16,b:'moon'}, CAVA:{n:'Cava',r:16,b:'moon'}, ONON:{n:'On Holding',r:15,b:'moon'},
+  SE:{n:'Sea Ltd',r:16,b:'moon'}, CPNG:{n:'Coupang',r:15,b:'moon'}, GRAB:{n:'Grab',r:16,b:'moon'}, OPEN:{n:'Opendoor',r:22,b:'moon'},
+  WOLF:{n:'Wolfspeed',r:22,b:'moon'}, LAZR:{n:'Luminar',r:22,b:'moon'}, QS:{n:'QuantumScape',r:22,b:'moon'}, EOSE:{n:'Eos Energy',r:22,b:'moon'},
+});
+['SCHB','ITOT','SPLG','SCHX','IWB','RSP','VFV','XUS','ZSP','XSP','XUU'].forEach(t=>ETF_BROAD_US.add(t));
+['SPYG','VONG','IGV','CIBR','HACK','AIQ','BOTZ','ROBO','ARKW','ZQQ','XQQ','HXQ'].forEach(t=>ETF_TECH.add(t));
+const ETF_ALLIN = new Set(['VT','ACWI','XEQT','VEQT','XGRO','VGRO','ZEQT']);   // global one-ticket funds
+const ETF_CANADA = new Set(['XIU','XIC','VCN','ZCN','EWC']);
+const ETF_CRYPTO = new Set(['IBIT','FBTC','ETHA','BITO']);
+const ETF_THEME = {URA:'Nuclear / uranium',URNM:'Nuclear / uranium',NLR:'Nuclear / uranium',TAN:'Clean energy',ICLN:'Clean energy',LIT:'Batteries / lithium',UFO:'Space',ARKG:'Biotech',ITA:'Industrials'};
+['VT','ACWI','XEQT','VEQT','XGRO','VGRO','ZEQT','IXUS','VEU','SCHE','KWEB','FXI','MCHI','EWZ','EWY','EWT','XAW','VXC','XEF','VIU','XEC','VEE'].forEach(t=>ETF_INTL.add(t));
+['DIVO','VDY','XEI','ZDV'].forEach(t=>ETF_DIV.add(t));
+Object.assign(SECTOR,{SKHY:'Tech',MU:'Tech',AMAT:'Tech',LRCX:'Tech',KLAC:'Tech',ADI:'Tech',NXPI:'Tech',ON:'Tech',MCHP:'Tech',ANET:'Tech',DELL:'Tech',HPE:'Tech',
+  NOW:'Tech',INTU:'Tech',WDAY:'Tech',PANW:'Tech',FTNT:'Tech',TCEHY:'Tech',BIDU:'Tech',CSU:'Tech',
+  UBER:'Consumer',SPOT:'Media',BKNG:'Consumer',TJX:'Consumer',CMG:'Consumer',LULU:'Consumer',RACE:'Consumer',GM:'Consumer',F:'Consumer',MELI:'Consumer',PDD:'Consumer',JD:'Consumer',BYDDY:'Consumer',ATD:'Consumer',DOL:'Consumer',
+  TTWO:'Media',EA:'Media',NTDOY:'Media',TRI:'Media',
+  PYPL:'Financials',SPGI:'Financials',BLK:'Financials',SCHW:'Financials',PGR:'Financials',RY:'Financials',TD:'Financials',BNS:'Financials',BMO:'Financials',CM:'Financials',BN:'Financials',BAM:'Financials',MFC:'Financials',
+  ISRG:'Healthcare',VRTX:'Healthcare',REGN:'Healthcare',BSX:'Healthcare',
+  ENB:'Energy',CNQ:'Energy',SU:'Energy',CCJ:'Energy',
+  VST:'Utilities',CEG:'Utilities',
+  BWXT:'Industrials',ETN:'Industrials',GEV:'Industrials',WM:'Industrials',MMM:'Industrials',CNR:'Industrials',CNI:'Industrials',CP:'Industrials',WCN:'Industrials',
+  BCE:'Telecom'});
+Object.assign(THEME,{IREN:'AI/Infra',CRWV:'AI/Infra',NBIS:'AI/Infra',CORZ:'AI/Infra',CIFR:'AI/Infra',WULF:'AI/Infra',APLD:'AI/Infra',
+  HUT:'Crypto',CLSK:'Crypto',BTDR:'Crypto',GLXY:'Crypto',BMNR:'Crypto',SBET:'Crypto',CRCL:'Crypto',
+  ALAB:'AI/Chips',CRDO:'AI/Chips',COHR:'AI/Chips',LITE:'AI/Chips',VRT:'AI/Infra',MRVL:'AI/Chips',SNDK:'AI/Chips',NVTS:'AI/Chips',POET:'AI/Chips',WOLF:'AI/Chips',
+  APP:'Software',TTD:'Software',PATH:'Software',S:'Software',ZS:'Software',MDB:'Software',OKTA:'Software',FIG:'Software',
+  RDW:'Space',PL:'Space',BKSY:'Space',FLY:'Space',LEU:'Nuclear',NNE:'Nuclear',TLN:'Nuclear',QUBT:'Quantum',
+  KTOS:'Drones/Defense',AVAV:'Drones/Defense',ONDS:'Drones/Defense',RCAT:'Drones/Defense',
+  SYM:'Robotics',SERV:'Robotics',RR:'Robotics',MP:'Rare earths',USAR:'Rare earths',UUUU:'Rare earths',
+  VKTX:'Biotech',BEAM:'Biotech',NTLA:'Biotech',NU:'Fintech',CHYM:'Fintech',KLAR:'Fintech',TOST:'Fintech',
+  DUOL:'Consumer growth',ELF:'Consumer growth',CAVA:'Consumer growth',ONON:'Consumer growth',CELH:'Consumer growth',
+  SE:'E-commerce',CPNG:'E-commerce',GRAB:'E-commerce',OPEN:'Real estate tech',LAZR:'EV',QS:'EV',EOSE:'Clean Energy'});
+
+let model = JSON.parse(JSON.stringify(DEFAULTS));
+
+// ============================================================
+//  EMAIL SUBMISSION (Web3Forms) — PASTE YOUR ACCESS KEY BELOW
+//  Submissions go to keithharasymiw@flowstatealpha.com.
+//  Web3Forms delivers to whichever address the access key was CREATED for, so:
+//  1. Go to https://web3forms.com → enter keithharasymiw@flowstatealpha.com → get the free Access Key (it's emailed to that inbox)
+//  2. Paste that key below, replacing the old one
+// ============================================================
+const SUBMIT_TO   = 'keithharasymiw@flowstatealpha.com';
+const WEB3FORMS_KEY = 'c2e1b509-cf16-406f-a53d-df160e16d24b';
+// Optional: free imgbb key so the email includes a LINK to a snapshot image of the portfolio.
+//   1. Sign up at https://imgbb.com  →  https://api.imgbb.com  →  "Get API Key"
+//   2. Paste it below. Leave the placeholder to send text-only (no chart image link).
+const IMGBB_KEY = 'YOUR-IMGBB-API-KEY';
+const emailOk = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+// ---------- Formatting ----------
+const fmt = n => '$'+Math.round(n).toLocaleString('en-US');
+
+// ---------- Datalists ----------
+function buildDatalists(){
+  const byBucket={etf:[],blue:[],moon:[]};
+  Object.entries(RETURNS).forEach(([tk,v])=>{ if(byBucket[v.b]) byBucket[v.b].push([tk,v.n]); });
+  document.getElementById('datalists').innerHTML = Object.entries(byBucket).map(([b,list])=>
+    `<datalist id="dl-${b}">${list.map(([tk,n])=>`<option value="${tk}">${n}</option>`).join('')}</datalist>`
+  ).join('');
+}
+
+// ---------- Build holdings table ----------
+function buildTable(){
+  const wrap = document.getElementById('cats');
+  wrap.innerHTML='';
+  model.forEach((cat,ci)=>{
+    const div=document.createElement('div');
+    div.className='cat';
+    let rows='';
+    cat.rows.forEach((r,ri)=>{
+      const col=cat.pal[ri]||cat.color;
+      rows+=`<tr class="hrow">
+        <td><span class="cswatch" style="background:${col}"></span></td>
+        <td><input class="cell tick col-tick" value="${r.tick}" placeholder="—" list="dl-${cat.key}" data-c="${ci}" data-r="${ri}" data-f="tick"></td>
+        <td><input class="cell nm" value="${r.name}" placeholder="auto from ticker" data-c="${ci}" data-r="${ri}" data-f="name"></td>
+        <td><input class="cell num col-alloc" type="number" value="${r.alloc}" data-c="${ci}" data-r="${ri}" data-f="alloc"></td>
+        <td><div class="cell num col-ret retcell revealed" id="ret-${ci}-${ri}" title="Set automatically from the ticker">${r.ret}</div></td>
+      </tr>`;
+    });
+    const sum=cat.rows.reduce((a,b)=>a+(+b.alloc||0),0);
+    div.innerHTML=`
+      <div class="cat-head">
+        <div class="cat-name"><span class="swatch" style="background:${cat.color}"></span>${cat.cat.replace(/\s*\(.*\)/,'')} <span style="color:var(--muted);font-weight:600">${cat.cat.match(/\((.*)\)/)[1]}</span></div>
+        <div class="cat-total" id="catsum-${ci}">${sum}%</div>
+      </div>
+      <table>
+        <thead><tr><th></th><th>Ticker</th><th>Name</th><th>Alloc %</th><th>Return %</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const c=+e.target.dataset.c, r=+e.target.dataset.r, f=e.target.dataset.f;
+      const row=model[c].rows[r];
+      if(f==='alloc') { row.alloc=parseFloat(e.target.value)||0; }
+      else if(f==='name'){ row.name=e.target.value; row.autoName=false; }
+      else if(f==='tick'){
+        row.tick=e.target.value;
+        const hit=RETURNS[e.target.value.trim().toUpperCase()];
+        row.ret = hit ? hit.r : model[c].base;   // auto from ticker (baseline if unknown)
+        const tr=e.target.closest('tr');
+        tr.querySelector('.col-ret').textContent = row.ret;   // show it live
+        // Name follows the ticker (so typing "V" then "VTI" doesn't leave "Visa" behind),
+        // unless the student typed their own name.
+        const nmInput=tr.querySelector('.nm');
+        if(!row.name || row.autoName){
+          row.name = hit ? hit.n : '';
+          row.autoName = !!hit;
+          nmInput.value = row.name;
+        }
+        markTick(e.target);
+      }
+      recalc();
+    });
+  });
+}
+
+// ---------- Pie chart ----------
+function polar(cx,cy,rad,ang){const a=(ang-90)*Math.PI/180;return[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
+function arc(cx,cy,rad,a0,a1){
+  const[x0,y0]=polar(cx,cy,rad,a0),[x1,y1]=polar(cx,cy,rad,a1);
+  const large=a1-a0>180?1:0;
+  return `M ${cx} ${cy} L ${x0} ${y0} A ${rad} ${rad} 0 ${large} 1 ${x1} ${y1} Z`;
+}
+function drawPie(){
+  const pie=document.getElementById('pie'), legend=document.getElementById('legend'), hint=document.getElementById('pieHint');
+  const cx=130,cy=130,R=118;
+  const flat=[];
+  model.forEach(cat=>cat.rows.forEach((r,ri)=>flat.push({...r,color:cat.pal[ri]||cat.color})));
+  const totalAlloc=flat.reduce((a,b)=>a+(+b.alloc||0),0);
+  const total=totalAlloc||1;
+  let ang=0, paths='';
+  flat.forEach(s=>{
+    const slice=(s.alloc/total)*360;
+    if(slice>0) paths+=`<path d="${arc(cx,cy,R,ang,ang+slice)}" fill="${s.color}" stroke="#0b1220" stroke-width="1.5"/>`;
+    ang+=slice;
+  });
+  if(totalAlloc<=0){
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#1e2b45" stroke-width="1.5" stroke-dasharray="4 5"/>`;
+  }
+  paths+=`<circle cx="${cx}" cy="${cy}" r="66" fill="#0e1626" stroke="#1e2b45" stroke-width="1"/>`;
+  paths+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" class="center-v">${blendedReturn().toFixed(1)}%</text>`;
+  paths+=`<text x="${cx}" y="${cy+14}" text-anchor="middle" class="center-r">blended return</text>`;
+  pie.innerHTML=paths;
+
+  const filled=flat.filter(s=>(+s.alloc||0)>0);
+  legend.innerHTML=filled.map(s=>`<div class="leg">
+    <span class="cswatch" style="background:${s.color}"></span>
+    <span class="lt">${s.tick||'—'}</span><span class="lp">${(s.alloc/total*100).toFixed(0)}%</span></div>`).join('');
+  hint.style.display = (!flat.some(s=>s.tick)) ? 'block' : 'none';
+}
+
+// ---------- Math ----------
+function blendedReturn(){
+  let wsum=0, alloc=0;
+  model.forEach(cat=>cat.rows.forEach(r=>{wsum+=(+r.alloc||0)*(+r.ret||0); alloc+=(+r.alloc||0);}));
+  return alloc? wsum/alloc : 0;
+}
+function project(annual,years,start,rPct){
+  const r=rPct/100;
+  let v=start; const series=[v];
+  for(let y=1;y<=years;y++){ v=v*(1+r)+annual; series.push(v); }
+  const deposited=start+annual*years;
+  return {final:v, deposited, growth:v-deposited, series};
+}
+function totalAlloc(){let t=0;model.forEach(c=>c.rows.forEach(r=>t+=(+r.alloc||0)));return t;}
+
+// ---------- Line chart ----------
+function drawChart(sA,sB,startAge){
+  const svg=document.getElementById('chart');
+  const W=900,H=340,pl=64,pr=20,pt=20,pb=40;
+  const n=sA.series.length;
+  const maxV=Math.max(...sA.series,...sB.series,1);
+  const x=i=>pl+(W-pl-pr)*(i/(n-1));
+  const y=v=>H-pb-(H-pt-pb)*(v/maxV);
+  const line=s=>s.series.map((v,i)=>`${i?'L':'M'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const area=s=>`${line(s)} L ${x(n-1)} ${H-pb} L ${x(0)} ${H-pb} Z`;
+  let g='';
+  for(let k=0;k<=4;k++){
+    const val=maxV*k/4, yy=y(val);
+    g+=`<line x1="${pl}" y1="${yy}" x2="${W-pr}" y2="${yy}" stroke="#1e2b45" stroke-width="1"/>`;
+    g+=`<text x="${pl-8}" y="${yy+4}" text-anchor="end" font-size="11" fill="#93a3c4">${fmt(val)}</text>`;
+  }
+  let xl='';
+  const step=Math.ceil(n/8);
+  for(let i=0;i<n;i+=step){
+    xl+=`<text x="${x(i)}" y="${H-pb+22}" text-anchor="middle" font-size="11" fill="#93a3c4">${startAge+i}</text>`;
+  }
+  xl+=`<text x="${(pl+W-pr)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="#93a3c4">Age</text>`;
+  svg.innerHTML=`${g}
+    <path d="${area(sB)}" fill="rgba(34,197,94,.12)"/>
+    <path d="${area(sA)}" fill="rgba(59,130,246,.12)"/>
+    <path d="${line(sB)}" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+    <path d="${line(sA)}" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+    ${xl}
+    <circle cx="${x(n-1)}" cy="${y(sB.series[n-1])}" r="4" fill="#22c55e"/>
+    <circle cx="${x(n-1)}" cy="${y(sA.series[n-1])}" r="4" fill="#3b82f6"/>`;
+}
+
+// ---------- Recalc everything ----------
+function recalc(){
+  const startAge=+document.getElementById('startAge').value||16;
+  const retireAge=+document.getElementById('retireAge').value||45;
+  const years=Math.max(0,retireAge-startAge);
+  const start=+document.getElementById('startDeposit').value||0;
+  const depA=+document.getElementById('depA').value||0;
+  const depB=+document.getElementById('depB').value||0;
+  document.getElementById('horizon').textContent=years;
+
+  let grand=0;
+  model.forEach((cat,ci)=>{
+    const sum=cat.rows.reduce((a,b)=>a+(+b.alloc||0),0);
+    grand+=sum;
+    const el=document.getElementById('catsum-'+ci);
+    if(el){el.textContent=sum+'%'; el.className='cat-total '+(sum>0?(Math.abs(sum-catTarget(cat))<0.01?'ok':'bad'):'');}
+  });
+  const gEl=document.getElementById('grandAlloc');
+  gEl.innerHTML=`<b style="color:${grand===0?'var(--muted)':(Math.abs(grand-100)<0.01?'var(--green)':'#f87171')}">${grand}%</b>`;
+  const rBlend=blendedReturn();
+  document.getElementById('blendRet').innerHTML = `<b>${rBlend.toFixed(1)}%</b>`;
+
+  const A=project(depA,years,start,rBlend);
+  const B=project(depB,years,start,rBlend);
+  document.getElementById('retLabel').textContent=`— age ${startAge} → ${retireAge} (${years} yrs)`;
+  const dep=v=>v?v.toLocaleString():'—';
+  document.getElementById('tagA').textContent=dep(depA);
+  document.getElementById('tagB').textContent=dep(depB);
+  document.getElementById('llA').textContent=dep(depA);
+  document.getElementById('llB').textContent=dep(depB);
+
+  document.getElementById('depTotA').innerHTML = fmt(A.deposited);
+  document.getElementById('growA').innerHTML   = fmt(A.growth);
+  document.getElementById('finA').innerHTML    = fmt(A.final);
+  document.getElementById('depTotB').innerHTML = fmt(B.deposited);
+  document.getElementById('growB').innerHTML   = fmt(B.growth);
+  document.getElementById('finB').innerHTML    = fmt(B.final);
+  const diff=B.final-A.final;
+  document.getElementById('deltaMsg').innerHTML =
+    `Doubling the yearly deposit adds <b>${fmt(diff)}</b> by age ${retireAge} — a final nest egg of <b>${fmt(B.final)}</b> vs ${fmt(A.final)}.`;
+
+  drawPie();
+  drawChart(A,B,startAge);
+  renderTips();
+}
+function catTarget(cat){const m=cat.cat.match(/\((\d+)%\)/);return m?+m[1]:100;}
+
+// ---------- Flag a ticker the lookup doesn't recognize ----------
+function markTick(el){
+  const tk=el.value.trim().toUpperCase();
+  const bad = tk && !RETURNS[tk];
+  el.classList.toggle('unknown', bad);
+  el.title = bad ? 'Ticker not recognized — double-check the symbol (uses a default estimate)' : '';
+}
+function unknownTickers(){
+  const list=[];
+  model.forEach(cat=>cat.rows.forEach(r=>{ const t=r.tick.trim().toUpperCase(); if(t && !RETURNS[t]) list.push(r.tick.trim()); }));
+  return [...new Set(list)];
+}
+
+// ---------- Diversification Coach (live tips based on picks — never reveals returns) ----------
+function renderTips(){
+  const box=document.getElementById('tips'); if(!box) return;
+  const picks=model.map(cat=>cat.rows.filter(r=>r.tick.trim()).map(r=>({t:r.tick.trim().toUpperCase(), a:+r.alloc||0})));
+  const etfs=picks[0], blues=picks[1], moons=picks[2];
+  const tips=[];
+
+  // ETFs
+  const etfSet=[...new Set(etfs.map(e=>e.t))];
+  const broad=etfSet.filter(t=>ETF_BROAD_US.has(t));
+  const techEtf=etfSet.filter(t=>ETF_TECH.has(t));
+  if(broad.length>=2) tips.push({k:'warn',b:'ETFs',x:`${broad.join(' & ')} overlap heavily — they hold almost the same US stocks. Swap one for international (VXUS) or small-cap for real variety.`});
+  if(techEtf.length>=2) tips.push({k:'warn',b:'ETFs',x:`${techEtf.join(', ')} are all tech/growth funds. Pair them with a broad-market (VOO) or dividend (SCHD) fund to balance.`});
+  if(etfs.length>=2 && !etfSet.some(t=>ETF_INTL.has(t))) tips.push({k:'info',b:'ETFs',x:`No international fund yet — adding VXUS or VEA spreads your money beyond the US.`});
+  if(etfs.length>=3 && broad.length<=1 && techEtf.length<=1 && etfSet.some(t=>ETF_INTL.has(t)||ETF_DIV.has(t))) tips.push({k:'good',b:'ETFs',x:`Nice — your ETF core blends different slices of the market.`});
+
+  // Blue chips
+  const bSectors=blues.map(b=>SECTOR[b.t]||'Other');
+  const techB=bSectors.filter(s=>s==='Tech').length;
+  if(blues.length>=2 && techB===blues.length) tips.push({k:'warn',b:'Blue chips',x:`All your blue chips are tech companies. This is your chance to branch out — healthcare (JNJ, LLY), consumer (COST, KO) or finance (JPM, V).`});
+  const dupEtf=blues.filter(b=>MEGA.has(b.t) && (techEtf.length||broad.length)).map(b=>b.t);
+  if(dupEtf.length) tips.push({k:'info',b:'Blue chips',x:`You already own ${[...new Set(dupEtf)].join(', ')} inside your ETFs (they're top holdings of funds like QQQ & VOO) — buying them again doubles down on a few companies.`});
+  const distinctSec=new Set(bSectors.filter(s=>s!=='Other'));
+  if(blues.length===3 && distinctSec.size>=3) tips.push({k:'good',b:'Blue chips',x:`Great — three different sectors (${[...distinctSec].join(', ')}). That's real diversification.`});
+
+  // Moonshots
+  const mThemes=moons.map(m=>THEME[m.t]||'Other');
+  const counts={}; mThemes.forEach(t=>{ if(t!=='Other') counts[t]=(counts[t]||0)+1; });
+  const dupTheme=Object.keys(counts).filter(t=>counts[t]>=2);
+  if(dupTheme.length) tips.push({k:'warn',b:'Moonshots',x:`Two or more moonshots are ${dupTheme.join(' & ')} plays — same-theme bets rise and crash together. Spread across themes (AI, space, fintech, EV).`});
+  if(moons.length>=1) tips.push({k:'info',b:'Moonshots',x:`Moonshots are high-risk by design — expect some to flop. That's exactly why they're only 20% of the plan.`});
+  const distinctTheme=new Set(mThemes.filter(t=>t!=='Other'));
+  if(moons.length===3 && distinctTheme.size===3) tips.push({k:'good',b:'Moonshots',x:`Good spread — three different moonshot themes.`});
+
+  // Whole-portfolio tech load (composition only, not returns)
+  let techW=0;
+  etfs.forEach(e=>{ if(ETF_TECH.has(e.t)) techW+=e.a; });
+  blues.forEach(b=>{ if(SECTOR[b.t]==='Tech') techW+=b.a; });
+  moons.forEach(m=>{ const th=THEME[m.t]; if(th==='AI/Chips'||th==='AI/Data') techW+=m.a; });
+  if(techW>=45) tips.unshift({k:'warn',b:'Whole portfolio',x:`About ${Math.round(techW)}% of your money sits in tech-focused picks. Tech tends to rise together — and fall together. Balancing with other sectors or regions smooths the ride.`});
+
+  // Unrecognized tickers — most actionable, goes to the very top
+  const unk=unknownTickers();
+  if(unk.length) tips.unshift({k:'info',b:'Not in our list yet',x:`${unk.join(', ')} ${unk.length>1?"aren't":"isn't"} in our ticker list, which is fine. ${unk.length>1?'They use':'It uses'} the category's default return estimate. Just double-check the spelling, and type the company name in yourself.`});
+
+  box.innerHTML = tips.length
+    ? tips.map(t=>`<div class="tip ${t.k}"><span class="tb">${t.b}</span>${t.x}</div>`).join('')
+    : '<div class="tip info"><span class="tb">Getting started</span>Pick your tickers and I\'ll give you live diversification tips right here.</div>';
+}
+
+// ---------- Build a plain-text summary of the portfolio for the email ----------
+function buildSubmissionText(email){
+  const g=id=>+document.getElementById(id).value||0;
+  const startAge=g('startAge')||16, retireAge=g('retireAge')||45;
+  const years=Math.max(0,retireAge-startAge);
+  const start=g('startDeposit'), depA=g('depA'), depB=g('depB');
+  const r=blendedReturn();
+  const A=project(depA,years,start,r), B=project(depB,years,start,r);
+  const lines=[];
+  model.forEach(cat=>{
+    lines.push(cat.cat);
+    cat.rows.forEach(row=>lines.push(`   ${row.tick.padEnd(6)} ${(row.name||'').padEnd(24)} ${row.alloc}%  |  ${row.ret}% est. return`));
+  });
+  return [
+    `Student email: ${email}`,
+    `Starting age ${startAge} → retire ${retireAge} (${years} yrs), starting deposit ${fmt(start)}`,
+    `Blended expected return: ${r.toFixed(1)}%`,
+    '',
+    'HOLDINGS',
+    ...lines,
+    '',
+    `Plan A ($${depA.toLocaleString()}/yr):  deposited ${fmt(A.deposited)}  |  growth ${fmt(A.growth)}  |  final ${fmt(A.final)}`,
+    `Plan B ($${depB.toLocaleString()}/yr):  deposited ${fmt(B.deposited)}  |  growth ${fmt(B.growth)}  |  final ${fmt(B.final)}`,
+  ].join('\n');
+}
+
+// ============================================================
+//  PORTFOLIO REPORT CARD — breakdown, score /100, ways to improve
+//  (rule-based, runs in the browser at submit time and goes in the email)
+// ============================================================
+const ETF_SMALLVAL = new Set(['AVUV','VBR','VB','IJR','VO','VTV','IWD','IWM']);
+const ETF_REIT     = new Set(['VNQ','SCHH']);
+const ETF_BOND     = new Set(['BND','AGG','TLT']);
+const ETF_COMMOD   = new Set(['GLD','SLV']);
+const ETF_SECTOR   = {XLF:'Financials',XLE:'Energy',XLV:'Healthcare',XLY:'Consumer',XLP:'Consumer',XLI:'Industrials',XLU:'Utilities'};
+
+function exposureOf(bucket,t){
+  if(bucket==='etf'){
+    if(ETF_ALLIN.has(t))    return 'Global all-in-one';
+    if(ETF_CANADA.has(t))   return 'Canada broad market';
+    if(ETF_CRYPTO.has(t))   return 'Crypto';
+    if(ETF_THEME[t])        return ETF_THEME[t];
+    if(ETF_BROAD_US.has(t)) return 'US broad market';
+    if(ETF_TECH.has(t))     return 'Tech / growth';
+    if(ETF_INTL.has(t))     return 'International';
+    if(ETF_DIV.has(t))      return 'Dividend / income';
+    if(ETF_SMALLVAL.has(t)) return 'Small / mid / value';
+    if(ETF_REIT.has(t))     return 'Real estate';
+    if(ETF_BOND.has(t))     return 'Bonds';
+    if(ETF_COMMOD.has(t))   return 'Gold / commodities';
+    if(ETF_SECTOR[t])       return ETF_SECTOR[t];
+    return 'Other ETF';
+  }
+  if(bucket==='blue'){ const s=SECTOR[t]||'Other'; return s==='Tech'?'Tech / growth':s; }
+  return 'Moonshot: '+(THEME[t]||'Other');
+}
+
+function analyzePortfolio(){
+  const gv=id=>+document.getElementById(id).value||0;
+  const startAge=gv('startAge')||16, retireAge=gv('retireAge')||45, years=Math.max(0,retireAge-startAge);
+  const start=gv('startDeposit'), depA=gv('depA'), depB=gv('depB');
+  const total=totalAlloc()||1;
+  const keys=['etf','blue','moon'];
+  const H=[]; model.forEach((cat,ci)=>cat.rows.forEach(r=>{
+    const t=r.tick.trim().toUpperCase();
+    H.push({t, name:r.name||(RETURNS[t]&&RETURNS[t].n)||'', w:(+r.alloc||0)/total*100, ret:+r.ret||0, b:keys[ci]});
+  }));
+  const by=b=>H.filter(h=>h.b===b);
+  const sumW=a=>a.reduce((s,h)=>s+h.w,0);
+  const etfs=by('etf'), blues=by('blue'), moons=by('moon');
+  const wE=sumW(etfs), wB=sumW(blues), wM=sumW(moons);
+  const strengths=[], fixes=[];
+  const parts=[];
+
+  // 1. Plan structure (15)
+  let s1=15;
+  const off=Math.abs(wE-55)+Math.abs(wB-25)+Math.abs(wM-20);
+  s1-=Math.min(9,Math.round(off/2));
+  const biggest=H.reduce((a,h)=>h.w>a.w?h:a,{w:0});
+  if(biggest.w>20){ s1-=4; fixes.push(`${biggest.t} is ${biggest.w.toFixed(0)}% of the portfolio. Keep any single holding at 15% or less so one bad stock can't sink the plan.`); }
+  const dupT=[...new Set(H.map(h=>h.t).filter((t,i,a)=>t&&a.indexOf(t)!==i))];
+  if(dupT.length){ s1-=4; fixes.push(`${dupT.join(', ')} appears more than once. Use that slot for a new holding.`); }
+  if(wM>25){ fixes.push(`Moonshots are ${wM.toFixed(0)}% of the money (plan is 20%). Trim them back; that slice should be money you can afford to lose.`); }
+  if(off<=2 && biggest.w<=20 && !dupT.length) strengths.push('Sticks to the 55 / 25 / 20 plan with no oversized single position.');
+  s1=Math.max(0,s1); parts.push(['Plan structure (55/25/20, position sizing)',s1,15]);
+
+  // 2. ETF core (25)
+  const eSet=[...new Set(etfs.map(h=>h.t))];
+  const broad=eSet.filter(t=>ETF_BROAD_US.has(t)), techE=eSet.filter(t=>ETF_TECH.has(t));
+  const hasIntl=eSet.some(t=>ETF_INTL.has(t));
+  const styles=new Set(eSet.map(t=>exposureOf('etf',t)).filter(x=>!['US broad market','Tech / growth','International'].includes(x)));
+  let s2=0;
+  if(broad.length||eSet.some(t=>ETF_ALLIN.has(t)||ETF_CANADA.has(t))) s2+=8; else fixes.push('No broad-market anchor ETF. Make VOO or VTI the biggest ETF; it owns the whole US market.');
+  if(hasIntl) { s2+=7; strengths.push('Has international exposure, so it isn\'t only betting on the US.'); }
+  else fixes.push('No international ETF. Swap one ETF for VXUS (or VEA/VWO) to own companies outside the US.');
+  let ov=5;
+  if(broad.length>=2){ ov-=3; fixes.push(`${broad.join(' & ')} hold almost the same stocks. Keep one and swap ${broad.length>2?'the others':'the other'} for international, small-cap (AVUV) or dividend (SCHD).`); }
+  if(techE.length>=2){ ov-=3; fixes.push(`${techE.join(', ')} are all tech/growth funds. Keep one and replace the rest with a different style.`); }
+  s2+=Math.max(0,ov);
+  s2+=Math.min(5,styles.size*3);
+  if(!styles.size) fixes.push('All ETFs are broad/tech/international. A dividend (SCHD) or small-cap value (AVUV) fund adds a different engine.');
+  parts.push(['ETF core diversification',s2,25]);
+
+  // 3. Blue-chip sector spread (20)
+  const bSec=blues.map(h=>SECTOR[h.t]||'Other');
+  const dSec=new Set(bSec.filter(s=>s!=='Other'));
+  let s3=dSec.size>=3?20:dSec.size===2?13:dSec.size===1?6:8;
+  const mega=blues.filter(h=>MEGA.has(h.t)).map(h=>h.t);
+  if(mega.length && (broad.length||techE.length)){ s3-=3; fixes.push(`${mega.join(', ')} ${mega.length>1?'are already top holdings':'is already a top holding'} inside your ETFs. A blue chip from a sector the ETFs hold less of (healthcare, consumer, industrials) adds more.`); }
+  if(dSec.size>=3) strengths.push(`Blue chips cover three different sectors (${[...dSec].join(', ')}).`);
+  else if(bSec.filter(s=>s==='Tech').length>=2) fixes.push('Most blue chips are tech. Try healthcare (JNJ, LLY), consumer (COST, KO), finance (JPM, V) or industrials (CAT).');
+  s3=Math.max(0,s3); parts.push(['Blue-chip sector spread',s3,20]);
+
+  // 4. Moonshot risk control (15)
+  const mTh=moons.map(h=>THEME[h.t]||'Other');
+  const dTh=new Set(mTh.filter(t=>t!=='Other'));
+  let s4=dTh.size>=3?10:dTh.size===2?6:dTh.size===1?2:5;
+  s4+= wM<=20.5?5:wM<=25?3:0;
+  const cnt={}; mTh.forEach(t=>{if(t!=='Other')cnt[t]=(cnt[t]||0)+1;});
+  const same=Object.keys(cnt).filter(t=>cnt[t]>=2);
+  if(same.length) fixes.push(`Two or more moonshots are ${same.join(' & ')} plays. Same-theme bets crash together, so spread them across themes (AI, space, fintech, nuclear, biotech).`);
+  if(dTh.size>=3) strengths.push('Moonshots are spread across three different themes.');
+  parts.push(['Moonshot risk control',s4,15]);
+
+  // 5. Whole-portfolio concentration (15)
+  let techW=0;
+  H.forEach(h=>{ if((h.b==='etf'&&ETF_TECH.has(h.t))||(h.b==='blue'&&SECTOR[h.t]==='Tech')||(h.b==='moon'&&/^AI/.test(THEME[h.t]||''))) techW+=h.w; });
+  const s5=techW<35?15:techW<45?10:techW<55?5:0;
+  if(techW>=35) fixes.push(`About ${techW.toFixed(0)}% of the money is in tech-driven picks. Tech rises and falls together; aim for under 35%.`);
+  else strengths.push(`Tech exposure is a balanced ${techW.toFixed(0)}% of the portfolio.`);
+  parts.push(['Concentration (tech load)',s5,15]);
+
+  // 6. Savings plan (10)
+  let s6=years>=25?5:years>=15?3:1;
+  if(depA>0) s6+=3;
+  if(depB>depA) s6+=2;
+  if(years<15) fixes.push(`Only a ${years}-year horizon. Starting earlier or retiring later gives compounding more time; that matters more than picking winners.`);
+  if(depB<=depA) fixes.push('Plan B should be a real stretch above Plan A, so you can see what extra saving does.');
+  if(years>=25) strengths.push(`A long ${years}-year horizon lets compounding do the heavy lifting.`);
+  parts.push(['Savings plan & time horizon',s6,10]);
+
+  // Data quality
+  const unk=unknownTickers();
+  const pen=0;   // real-but-unlisted tickers aren't penalized; they're just flagged for you
+  if(unk.length) fixes.unshift(`(For the instructor) ${unk.join(', ')} ${unk.length>1?'aren\'t':'isn\'t'} in the ticker list, so sector/theme checks treat ${unk.length>1?'them':'it'} as "Other" and use a default return. Check the spelling.`);
+
+  const score=Math.max(0,Math.min(100,parts.reduce((s,p)=>s+p[1],0)-pen));
+  const grade=score>=90?'A':score>=80?'B':score>=70?'C':score>=60?'D':'F';
+  const verdict=score>=90?'Excellent: well-diversified and disciplined.':score>=80?'Strong: a few tweaks away from excellent.':score>=70?'Solid start, with some clear concentration risks to fix.':score>=60?'Needs work: too concentrated in places.':'Rebuild recommended: start from a broad ETF core.';
+
+  const blend=blendedReturn();
+  if(blend>13) fixes.push(`The blended return estimate is ${blend.toFixed(1)}%/yr, which is aggressive. Assume 7–10% when planning; high estimates usually mean high risk.`);
+
+  // Exposure map
+  const exp={}; H.forEach(h=>{const k=exposureOf(h.b,h.t); exp[k]=(exp[k]||0)+h.w;});
+  const expList=Object.entries(exp).sort((a,b)=>b[1]-a[1]);
+  const top3=[...H].sort((a,b)=>b.w-a.w).slice(0,3);
+  const A=project(depA,years,start,blend), B=project(depB,years,start,blend);
+  const risk=wM>25||techW>=55?'High':wM>15||techW>=40?'Moderate-High':'Moderate';
+
+  return {score,grade,verdict,parts,pen,unk,strengths,fixes:[...new Set(fixes)],
+    wE,wB,wM,techW,expList,top3,blend,risk,years,startAge,retireAge,start,depA,depB,A,B};
+}
+
+function reportText(R){
+  const L=[];
+  const dots=(label,val)=>`  ${label} ${'.'.repeat(Math.max(2,44-label.length))} ${val}`;
+  L.push(`PORTFOLIO SCORE: ${R.score}/100  (Grade ${R.grade})`);
+  L.push(R.verdict,'');
+  L.push('SCORE BREAKDOWN');
+  R.parts.forEach(p=>L.push(dots(p[0],`${p[1]}/${p[2]}`)));
+  if(R.pen) L.push(dots('Unrecognized tickers',`-${R.pen}`));
+  return L.join('\n');
+}
+function breakdownText(R){
+  const L=[];
+  L.push('PORTFOLIO BREAKDOWN');
+  L.push(`  ETFs ${R.wE.toFixed(0)}%  ·  Blue chips ${R.wB.toFixed(0)}%  ·  Moonshots ${R.wM.toFixed(0)}%`);
+  L.push(`  Blended expected return: ${R.blend.toFixed(1)}%/yr  ·  Risk level: ${R.risk}  ·  Tech load: ${R.techW.toFixed(0)}%`);
+  L.push(`  Largest positions: ${R.top3.map(h=>`${h.t} ${h.w.toFixed(0)}%`).join(', ')}`);
+  L.push('','EXPOSURE BY AREA');
+  R.expList.forEach(([k,w])=>L.push(`  ${k.padEnd(28)} ${w.toFixed(0).padStart(3)}%`));
+  L.push('','PROJECTION');
+  L.push(`  Age ${R.startAge} → ${R.retireAge} (${R.years} yrs), starting with ${fmt(R.start)}`);
+  L.push(`  Plan A ${fmt(R.depA)}/yr → ${fmt(R.A.final)}   ·   Plan B ${fmt(R.depB)}/yr → ${fmt(R.B.final)}`);
+  return L.join('\n');
+}
+function improveText(R){
+  const L=[];
+  L.push('WHAT\'S WORKING');
+  (R.strengths.length?R.strengths:['Completed a full 10-holding plan, which is a great first step.']).forEach(s=>L.push('  ✓ '+s));
+  L.push('','WAYS TO IMPROVE');
+  (R.fixes.length?R.fixes:['Nothing major. Review once a year and rebalance back to 55 / 25 / 20.']).forEach((s,i)=>L.push(`  ${i+1}. ${s}`));
+  return L.join('\n');
+}
+
+// ---------- Render a snapshot image of the portfolio (pie + returns + projection + chart) ----------
+function rr(x,X,Y,w,h,rad){x.beginPath();x.moveTo(X+rad,Y);x.arcTo(X+w,Y,X+w,Y+h,rad);x.arcTo(X+w,Y+h,X,Y+h,rad);x.arcTo(X,Y+h,X,Y,rad);x.arcTo(X,Y,X+w,Y,rad);x.closePath();}
+function makeReportCanvas(email){
+  const gv=id=>+document.getElementById(id).value||0;
+  const startAge=gv('startAge')||16, retireAge=gv('retireAge')||45, years=Math.max(0,retireAge-startAge);
+  const start=gv('startDeposit'), depA=gv('depA'), depB=gv('depB');
+  const r=blendedReturn();
+  const A=project(depA,years,start,r), B=project(depB,years,start,r);
+  const flat=[]; model.forEach(cat=>cat.rows.forEach((row,ri)=>flat.push({...row,color:cat.pal[ri]||cat.color})));
+
+  const W=920,H=1180, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d'); x.textBaseline='alphabetic';
+  x.fillStyle='#0b1220'; x.fillRect(0,0,W,H);
+  // header
+  x.fillStyle='#22c55e'; x.beginPath(); x.arc(46,48,7,0,7); x.fill();
+  x.fillStyle='#e8eefc'; x.font='bold 30px "Segoe UI",Arial'; x.fillText('FlowState Student Portfolio',62,58);
+  x.fillStyle='#93a3c4'; x.font='15px "Segoe UI",Arial';
+  x.fillText(`${email}   ·   age ${startAge} → ${retireAge} (${years} yrs)   ·   start ${fmt(start)}   ·   blended return ${r.toFixed(1)}%`,62,86);
+  x.strokeStyle='#1e2b45'; x.lineWidth=1; x.beginPath(); x.moveTo(40,104); x.lineTo(W-40,104); x.stroke();
+  // pie
+  const cx=210, cy=300, R=130, totalAlloc=flat.reduce((a,b)=>a+(+b.alloc||0),0)||1;
+  let ang=-Math.PI/2;
+  flat.forEach(s=>{ const a2=ang+(s.alloc/totalAlloc)*Math.PI*2;
+    x.beginPath(); x.moveTo(cx,cy); x.arc(cx,cy,R,ang,a2); x.closePath();
+    x.fillStyle=s.color; x.fill(); x.strokeStyle='#0b1220'; x.lineWidth=2; x.stroke(); ang=a2; });
+  x.beginPath(); x.arc(cx,cy,72,0,Math.PI*2); x.fillStyle='#0e1626'; x.fill(); x.strokeStyle='#1e2b45'; x.lineWidth=1; x.stroke();
+  x.fillStyle='#e8eefc'; x.font='bold 26px "Segoe UI",Arial'; x.textAlign='center'; x.fillText(r.toFixed(1)+'%',cx,cy);
+  x.fillStyle='#93a3c4'; x.font='12px "Segoe UI",Arial'; x.fillText('blended return',cx,cy+20); x.textAlign='left';
+  // legend (with revealed returns)
+  let ly=158; const lx=430;
+  flat.forEach(s=>{
+    x.fillStyle=s.color; x.fillRect(lx,ly-11,12,12);
+    x.fillStyle='#e8eefc'; x.font='bold 14px "Segoe UI",Arial'; x.fillText(s.tick,lx+20,ly);
+    x.fillStyle='#93a3c4'; x.font='13px "Segoe UI",Arial';
+    let nm=(s.name||''); if(nm.length>22) nm=nm.slice(0,21)+'…'; x.fillText(nm,lx+78,ly);
+    x.fillStyle='#e8eefc'; x.textAlign='right'; x.font='13px "Segoe UI",Arial'; x.fillText(s.alloc+'%',lx+405,ly);
+    x.fillStyle='#86efac'; x.fillText(s.ret+'% ret',lx+470,ly); x.textAlign='left';
+    ly+=30;
+  });
+  // projection cards
+  x.fillStyle='#93a3c4'; x.font='bold 12px "Segoe UI",Arial'; x.fillText('PROJECTION AT RETIREMENT',40,500);
+  const card=(bx,title,accent,P)=>{
+    const bw=410,bh=132,by=515;
+    x.fillStyle='#0e1626'; rr(x,bx,by,bw,bh,12); x.fill(); x.strokeStyle=accent; x.lineWidth=1.5; rr(x,bx,by,bw,bh,12); x.stroke();
+    x.fillStyle=accent; x.font='bold 13px "Segoe UI",Arial'; x.textAlign='left'; x.fillText(title,bx+16,by+28);
+    const row=(l,v,yy,big)=>{ x.fillStyle='#93a3c4'; x.font='13px "Segoe UI",Arial'; x.textAlign='left'; x.fillText(l,bx+16,yy);
+      x.fillStyle='#e8eefc'; x.font=(big?'bold 19px':'bold 13px')+' "Segoe UI",Arial'; x.textAlign='right'; x.fillText(v,bx+bw-16,yy); };
+    row('Total deposited',fmt(P.deposited),by+58); row('Total growth',fmt(P.growth),by+84); row('Final value',fmt(P.final),by+116,true);
+    x.textAlign='left';
+  };
+  card(40,`Plan A · $${depA.toLocaleString()}/yr`,'#3b82f6',A);
+  card(470,`Plan B · $${depB.toLocaleString()}/yr`,'#22c55e',B);
+  // growth chart
+  x.fillStyle='#93a3c4'; x.font='bold 12px "Segoe UI",Arial'; x.fillText('GROWTH OVER TIME',40,695);
+  const gx0=70,gx1=W-40,gy0=715,gy1=1120, n=A.series.length, maxV=Math.max(...A.series,...B.series,1);
+  const px=i=>gx0+(gx1-gx0)*(i/(n-1)), py=v=>gy1-(gy1-gy0)*(v/maxV);
+  x.strokeStyle='#1e2b45'; x.lineWidth=1; x.font='12px "Segoe UI",Arial';
+  for(let k=0;k<=4;k++){ const val=maxV*k/4, yy=py(val); x.beginPath(); x.moveTo(gx0,yy); x.lineTo(gx1,yy); x.stroke();
+    x.fillStyle='#93a3c4'; x.textAlign='right'; x.fillText(fmt(val),gx0-8,yy+4); }
+  x.textAlign='center'; const step=Math.ceil(n/8);
+  for(let i=0;i<n;i+=step){ x.fillText(startAge+i,px(i),gy1+20); }
+  const poly=(series,stroke,fill)=>{
+    x.beginPath(); series.forEach((v,i)=>{const X=px(i),Y=py(v); i?x.lineTo(X,Y):x.moveTo(X,Y);});
+    x.lineTo(px(n-1),gy1); x.lineTo(px(0),gy1); x.closePath(); x.fillStyle=fill; x.fill();
+    x.beginPath(); series.forEach((v,i)=>{const X=px(i),Y=py(v); i?x.lineTo(X,Y):x.moveTo(X,Y);}); x.strokeStyle=stroke; x.lineWidth=2.5; x.stroke();
+  };
+  poly(B.series,'#22c55e','rgba(34,197,94,.12)'); poly(A.series,'#3b82f6','rgba(59,130,246,.12)');
+  x.textAlign='left';
+  return c;
+}
+
+// ---------- Upload snapshot to imgbb, return a shareable image URL ----------
+async function uploadImage(canvas){
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  const fd = new FormData(); fd.append('image', b64);
+  const res = await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_KEY, {method:'POST', body:fd});
+  const j = await res.json().catch(()=>({}));
+  if(j && j.success && j.data && j.data.url) return j.data.url;
+  throw new Error('imgbb upload failed');
+}
+
+// ---------- Send to FlowState Alpha via Web3Forms ----------
+async function sendSubmission(email, imageUrl){
+  const R=analyzePortfolio();
+  const res=await fetch('https://api.web3forms.com/submit',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({
+      access_key: WEB3FORMS_KEY,
+      subject: `New Student Portfolio: ${email} (Score ${R.score}/100, ${R.grade})`,
+      from_name: 'FlowState Portfolio Builder',
+      replyto: email,
+      send_to: SUBMIT_TO,
+      student_email: email,
+      score: `${R.score}/100 (Grade ${R.grade}): ${R.verdict}`,
+      score_breakdown: reportText(R),
+      portfolio_breakdown: breakdownText(R),
+      ways_to_improve: improveText(R),
+      holdings_detail: buildSubmissionText(email),
+      chart_image: imageUrl || '(no image link configured)'
+    })
+  });
+  const data=await res.json().catch(()=>({}));
+  if(!(res.ok && data.success)) throw new Error(data.message||('server said '+res.status));
+  return true;
+}
+
+// ---------- Submit to FlowState Alpha (no lock — students can keep editing) ----------
+async function submitPortfolio(){
+  const msg=document.getElementById('lockMsg');
+  const email=document.getElementById('studentEmail').value.trim();
+  const grand=totalAlloc();
+  let missing=0;
+  model.forEach(c=>c.rows.forEach(r=>{ if(!r.tick.trim()) missing++; }));
+  if(missing){
+    msg.className='lockmsg warn';
+    msg.textContent=`⚠️ Pick a ticker for all 10 holdings first — ${missing} still empty.`;
+    return;
+  }
+  if(Math.abs(grand-100)>0.01){
+    msg.className='lockmsg warn';
+    msg.textContent=`⚠️ Your allocations total ${grand}% — adjust them to 100% before submitting.`;
+    return;
+  }
+  const sAge=+document.getElementById('startAge').value||0;
+  const rAge=+document.getElementById('retireAge').value||0;
+  if(!(rAge>sAge)){
+    msg.className='lockmsg warn';
+    msg.textContent='⚠️ Set a retirement age higher than your starting age.';
+    return;
+  }
+  const start=+document.getElementById('startDeposit').value||0;
+  const dA=+document.getElementById('depA').value||0;
+  const dB=+document.getElementById('depB').value||0;
+  if(start<=0 || dA<=0 || dB<=0){
+    msg.className='lockmsg warn';
+    msg.textContent='⚠️ Enter your starting deposit and both yearly amounts (Plan A and Plan B) before submitting.';
+    return;
+  }
+  if(!emailOk(email)){
+    msg.className='lockmsg warn';
+    msg.textContent='⚠️ Enter a valid email so we know whose portfolio this is.';
+    document.getElementById('studentEmail').focus();
+    return;
+  }
+  // On-page two-step confirm (browser confirm() pop-ups are blocked inside sandboxed/embedded pages)
+  const btn=document.getElementById('submitBtn');
+  if(!btn.dataset.armed){
+    btn.dataset.armed='1';
+    btn.textContent='✅ Click again to confirm';
+    const unk=unknownTickers();
+    msg.className='lockmsg warn';
+    msg.textContent='Ready to send your portfolio and email to FlowState Alpha. Click the button again to confirm.'
+      + (unk.length?` (Heads up: ${unk.join(', ')} ${unk.length>1?"aren't":"isn't"} in our ticker list, so double-check the spelling.)`:'');
+    clearTimeout(btn._disarm);
+    btn._disarm=setTimeout(()=>{ delete btn.dataset.armed; btn.textContent='📤 Submit to FlowState Alpha'; if(msg.className==='lockmsg warn') msg.textContent=''; },10000);
+    return;
+  }
+  delete btn.dataset.armed; clearTimeout(btn._disarm);
+  btn.textContent='📤 Submit to FlowState Alpha';
+  if(WEB3FORMS_KEY.includes('YOUR-')){
+    msg.className='lockmsg ok';
+    msg.innerHTML='<span style="color:var(--muted)">Email sending isn\'t configured yet — use Print / Save PDF to submit.</span>';
+    return;
+  }
+  btn.disabled=true;
+  msg.className='lockmsg sending';
+  msg.textContent='Building your portfolio snapshot and sending to FlowState Alpha…';
+  // Optional: render + upload a snapshot image so the email includes a visual link
+  let imageUrl='';
+  if(!IMGBB_KEY.includes('YOUR-')){
+    try{ imageUrl = await uploadImage(makeReportCanvas(email)); }
+    catch(e){ imageUrl=''; }   // image is a nice-to-have; never blocks the submission
+  }
+  try{
+    const ok=await sendSubmission(email, imageUrl);
+    if(ok){
+      msg.className='lockmsg ok';
+      msg.textContent = imageUrl
+        ? '✓ Submitted to FlowState Alpha — with a snapshot of your portfolio!'
+        : '✓ Submitted to FlowState Alpha! (You can also print a copy.)';
+    }else{
+      throw new Error('send failed');
+    }
+  }catch(e){
+    msg.className='lockmsg warn';
+    msg.innerHTML='Couldn\'t send the email ('+(e&&e.message?e.message:'network error')+'). Check your connection and try again, or use <b>Print / Save PDF</b> and send it to your instructor.';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+function resetAll(){
+  model=JSON.parse(JSON.stringify(DEFAULTS));
+  document.getElementById('startAge').value=16;
+  document.getElementById('retireAge').value=45;
+  ['startDeposit','depA','depB','studentEmail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lockMsg').textContent='';
+  buildTable(); recalc();
+}
+
+['startAge','retireAge','startDeposit','depA','depB'].forEach(id=>
+  document.getElementById(id).addEventListener('input',recalc));
+
+buildDatalists();
+buildTable();
+recalc();
+</script>
+
+</body></html>
